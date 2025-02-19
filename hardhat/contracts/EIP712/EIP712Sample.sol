@@ -3,6 +3,7 @@ pragma solidity 0.8.28;
 
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {IEIP712Sample} from "./interfaces/IEIP712Sample.sol";
 
 contract EIP712Contract is EIP712, IEIP712Sample {
@@ -136,4 +137,43 @@ contract EIP712Contract is EIP712, IEIP712Sample {
         emit ComplexDataVerified(timestamp, data, flag, nonce);
         return true;
     }
+
+    function verifyDelegation(
+        address delegator,
+        address delegatee,
+        uint256 expiration,
+        uint256 nonce,
+        bytes memory signature
+    ) public returns (bool) {
+        require(nonce == nonces[delegator], "Invalid nonce");
+
+        bytes32 structHash = keccak256(
+            abi.encode(
+                keccak256(
+                    "Delegation(address delegator,address delegatee,uint256 expiration,uint256 nonce)"
+                ),
+                delegator,
+                delegatee,
+                expiration,
+                nonce
+            )
+        );
+
+        bytes32 digest = _hashTypedDataV4(structHash);
+        require(
+            SignatureChecker.isValidSignatureNow(delegator, digest, signature),
+            "Invalid signature"
+        );
+
+        nonces[delegator] += 1;
+        emit DelegationVerified(delegator, delegatee, expiration, nonce);
+        return true;
+    }
+
+    event DelegationVerified(
+        address indexed delegator,
+        address indexed delegatee,
+        uint256 expiration,
+        uint256 nonce
+    );
 }
