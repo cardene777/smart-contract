@@ -2,7 +2,7 @@
 
 ## コントラクト
 
-[Create2Sample.sol](../hardhat/contracts/Create2)
+[Create2Factory.sol](../hardhat/contracts/Create2Factory.sol)
 
 ## 概要
 
